@@ -61,7 +61,7 @@ app.post("/api/endpoint", async (req, res) => {
 		res.status(200).json({ message: "Data received successfully" });
 	} catch (error) {
 		console.error("Failed to save data:", error);
-		res.status(500).json({ error: "Failed to save data" });
+		res.status(500).json({ error: "Failed to save Data" });
 	}
 });
 
