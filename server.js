@@ -3,43 +3,36 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-// MongoDB connection string
 const mongoURI =
 	"mongodb+srv://aadilrehmandevelopment:3hK8SDAXtTJmlsrL@cluster0.uhb2epg.mongodb.net/yourDatabaseName?retryWrites=true&w=majority&appName=Cluster0";
 
 const app = express();
-const port = 3001; // This port is for local development
+const port = 3001;
 
-// Middleware
 app.use(bodyParser.json());
 app.use(cors());
 
-let isConnected = false;
+let cachedDb = null;
 
 const connectToDatabase = async () => {
-	if (isConnected) {
-		console.log("Using existing database connection");
-		return;
+	if (cachedDb) {
+		console.log("Using cached database instance");
+		return cachedDb;
 	}
 	try {
-		await mongoose.connect(mongoURI, {
+		const db = await mongoose.connect(mongoURI, {
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
 		});
-		isConnected = true;
+		cachedDb = db;
 		console.log("Connected to MongoDB");
+		return db;
 	} catch (error) {
 		console.error("MongoDB connection error:", error);
+		throw error;
 	}
 };
 
-// Ensure database connection before handling any request
-app.use(async (req, res, next) => {
-	await connectToDatabase();
-	next();
-});
-
-// Define a schema for activities
 const activitySchema = new mongoose.Schema({
 	timestamp: String,
 	id: String,
@@ -56,39 +49,35 @@ const activitySchema = new mongoose.Schema({
 	noOfPostersPasted: Number,
 });
 
-// Create a model for activities
-const Activity = mongoose.model("Activity", activitySchema);
+const Activity =
+	mongoose.models.Activity || mongoose.model("Activity", activitySchema);
 
-// Handle POST requests to /api/endpoint
 app.post("/api/endpoint", async (req, res) => {
+	await connectToDatabase();
 	const data = req.body;
-	console.log("Received data:", data); // Debugging statement
 	const activity = new Activity(data);
 	try {
 		const savedActivity = await activity.save();
-		console.log("Saved activity:", savedActivity); // Debugging statement
 		res.status(200).json({ message: "Data received successfully" });
 	} catch (error) {
-		console.error("Failed to save data:", error); // Debugging statement
+		console.error("Failed to save data:", error);
 		res.status(500).json({ error: "Failed to save data" });
 	}
 });
 
-// Handle GET requests to /api/endpoint
 app.get("/api/endpoint", async (req, res) => {
+	await connectToDatabase();
 	try {
 		const activities = await Activity.find();
-		console.log("Fetched activities:", activities); // Debugging statement
 		res.status(200).json(activities);
 	} catch (error) {
-		console.error("Failed to fetch data:", error); // Debugging statement
+		console.error("Failed to fetch data:", error);
 		res.status(500).json({ error: "Failed to fetch data" });
 	}
 });
 
-// Start the server
 app.listen(port, () => {
 	console.log(`Server running on http://localhost:${port}`);
 });
 
-module.exports = app; // Export the app for Vercel
+module.exports = app;

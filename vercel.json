@@ -11,5 +11,10 @@
       "src": "/api/endpoint",
       "dest": "/server.js"
     }
-  ]
+  ],
+  "functions": {
+    "server.js": {
+      "maxDuration": 30
+    }
+  }
 }
