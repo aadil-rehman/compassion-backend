@@ -16,7 +16,7 @@ let activities = [];
 app.post("/api/endpoint", (req, res) => {
 	const data = req.body;
 	activities.push(data);
-	res.status(200).json({ message: "Data received successfully" });
+	res.status(200).json({ message: "Activities data received successfully" });
 });
 
 // Handle GET requests to /api/endpoint
